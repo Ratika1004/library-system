@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BookService {
@@ -39,5 +40,19 @@ public class BookService {
         return bookRepository
                 .findByTitleContainingOrAuthorContainingOrCategoryContaining(
                         keyword, keyword, keyword);
+    }
+
+    public String updateBook(int id, Book updatedBook) {
+        Optional<Book> existing = bookRepository.findById(id);
+        if (existing.isEmpty()) return "Book not found";
+
+        Book book = existing.get();
+        book.setTitle(updatedBook.getTitle());
+        book.setAuthor(updatedBook.getAuthor());
+        book.setCategory(updatedBook.getCategory());
+        book.setTotalCopies(updatedBook.getTotalCopies());
+        book.setAvailableCopies(updatedBook.getAvailableCopies());
+        bookRepository.save(book);
+        return "Book updated successfully";
     }
 }

@@ -39,5 +39,13 @@ public class BookController {
         }
         return ResponseEntity.badRequest().body(result);
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBook(@PathVariable int id, @RequestBody Book book) {
+        String result = bookService.updateBook(id, book);
+        if (result.equals("Book updated successfully")) {
+            return ResponseEntity.ok(result);
+        }
+        return ResponseEntity.badRequest().body(result);
+    }
 
 }
