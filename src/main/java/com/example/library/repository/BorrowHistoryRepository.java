@@ -13,6 +13,7 @@ public interface BorrowHistoryRepository extends JpaRepository<BorrowHistory, In
     List<BorrowHistory> findByUser(User user);
 
     List<BorrowHistory> findByStatus(BorrowHistory.Status status);
+    void deleteByBookId(int bookId);
 
     @Query("SELECT b FROM BorrowHistory b WHERE b.user = :user AND b.book.id = :bookId AND b.status = :status")
     Optional<BorrowHistory> findActiveRecord(

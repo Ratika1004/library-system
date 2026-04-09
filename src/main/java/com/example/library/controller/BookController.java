@@ -3,6 +3,7 @@ package com.example.library.controller;
 import com.example.library.model.Book;
 import com.example.library.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,8 +32,12 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteBook(@PathVariable int id){
-        bookService.deleteBook(id);
+    public ResponseEntity<?> deleteBook(@PathVariable int id) {
+        String result = bookService.deleteBook(id);
+        if (result.equals("Book deleted successfully")) {
+            return ResponseEntity.ok(result);
+        }
+        return ResponseEntity.badRequest().body(result);
     }
 
 }
