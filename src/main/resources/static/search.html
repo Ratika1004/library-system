@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Books</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <span class="brand">Library System</span>
+    <div>
+        <a href="index.html">Browse Books</a>
+        <a href="search.html">Search</a>
+        <a href="history.html">My History</a>
+        <a href="admin.html">Admin</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>Search Books</h1>
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search by title, author or category...">
+        <button class="btn btn-primary" onclick="searchBooks()">Search</button>
+    </div>
+    <div id="alert" class="alert"></div>
+    <div id="book-grid" class="book-grid"></div>
+</div>
+
+<script>
+    const USER_ID = parseInt(localStorage.getItem('userId')) || 1;
+    const USER_ROLE = localStorage.getItem('userRole');
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    function showAlert(message, type) {
+        const alert = document.getElementById('alert');
+        alert.textContent = message;
+        alert.className = 'alert alert-' + type;
+        alert.style.display = 'block';
+        setTimeout(() => alert.style.display = 'none', 3000);
+    }
+
+    function searchBooks() {
+        const q = document.getElementById('search-input').value.trim();
+        if (!q) return;
+
+        fetch(`/api/books/search?q=${q}`)
+            .then(res => res.json())
+            .then(books => {
+                const grid = document.getElementById('book-grid');
+                grid.innerHTML = '';
+                if (books.length === 0) {
+                    grid.innerHTML = '<p>No books found.</p>';
+                    return;
+                }
+                books.forEach(book => {
+                    const available = book.availableCopies > 0;
+                    grid.innerHTML += `
+                        <div class="book-card">
+                            <h3>${book.title}</h3>
+                            <p>Author: ${book.author}</p>
+                            <p>Category: ${book.category}</p>
+                            <span class="badge ${available ? 'badge-success' : 'badge-danger'}">
+                                ${available ? book.availableCopies + ' Available' : 'Not Available'}
+                            </span><br>
+                            <button class="btn btn-primary"
+                                ${!available ? 'disabled' : ''}
+                                onclick="borrowBook(${book.id})">
+                                Borrow
+                            </button>
+                        </div>`;
+                });
+            });
+    }
+
+    function borrowBook(bookId) {
+        fetch('/api/borrow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: USER_ID, bookId: bookId })
+        })
+        .then(res => res.text())
+        .then(msg => {
+            showAlert(msg, msg.includes('successfully') ? 'success' : 'danger');
+            searchBooks();
+        });
+    }
+
+    document.getElementById('search-input')
+        .addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchBooks();
+        });
+</script>
+</body>
+</html>

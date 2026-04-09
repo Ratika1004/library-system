@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Borrow History</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <span class="brand">Library System</span>
+    <div>
+        <a href="index.html">Browse Books</a>
+        <a href="search.html">Search</a>
+        <a href="history.html">My History</a>
+        <a href="admin.html">Admin</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>My Borrow History</h1>
+    <div id="alert" class="alert"></div>
+    <table>
+        <thead>
+        <tr>
+            <th>Book Title</th>
+            <th>Author</th>
+            <th>Borrow Date</th>
+            <th>Return Date</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="history-table"></tbody>
+    </table>
+</div>
+
+<script>
+    const USER_ID = parseInt(localStorage.getItem('userId')) || 1;
+    const USER_ROLE = localStorage.getItem('userRole');
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    function showAlert(message, type) {
+        const alert = document.getElementById('alert');
+        alert.textContent = message;
+        alert.className = 'alert alert-' + type;
+        alert.style.display = 'block';
+        setTimeout(() => alert.style.display = 'none', 3000);
+    }
+
+    function loadHistory() {
+        fetch(`/api/borrow/history/${USER_ID}`)
+            .then(res => res.json())
+            .then(records => {
+                const tbody = document.getElementById('history-table');
+                tbody.innerHTML = '';
+                if (records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6">No history found.</td></tr>';
+                    return;
+                }
+                records.forEach(record => {
+                    const isBorrowed = record.status === 'BORROWED';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${record.book.title}</td>
+                            <td>${record.book.author}</td>
+                            <td>${record.borrowDate}</td>
+                            <td>${record.returnDate ?? '-'}</td>
+                            <td>
+                                <span class="badge ${isBorrowed ? 'badge-danger' : 'badge-success'}">
+                                    ${record.status}
+                                </span>
+                            </td>
+                            <td>
+                                ${isBorrowed
+                                    ? `<button class="btn btn-success"
+                                        onclick="returnBook(${record.book.id})">
+                                        Return
+                                       </button>`
+                                    : '-'}
+                            </td>
+                        </tr>`;
+                });
+            });
+    }
+
+    function returnBook(bookId) {
+        fetch('/api/borrow/return', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: USER_ID, bookId: bookId })
+        })
+        .then(res => res.text())
+        .then(msg => {
+            showAlert(msg, msg.includes('successfully') ? 'success' : 'danger');
+            loadHistory();
+        });
+    }
+
+    loadHistory();
+</script>
+</body>
+</html>
