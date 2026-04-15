@@ -27,24 +27,33 @@ public class BookController {
     }
 
     @PostMapping
-    public Book addBook(@RequestBody Book book){
-        return bookService.addBook(book);
+    public ResponseEntity<?> addBook(@RequestBody Book book,
+                                     @RequestHeader(value = "X-User-Role", defaultValue = "") String role) {
+        if (!role.equals("ADMIN")) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        return ResponseEntity.ok(bookService.addBook(book));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBook(@PathVariable int id) {
-        String result = bookService.deleteBook(id);
-        if (result.equals("Book deleted successfully")) {
-            return ResponseEntity.ok(result);
+    public ResponseEntity<?> deleteBook(@PathVariable int id,
+                                        @RequestHeader(value = "X-User-Role", defaultValue = "") String role) {
+        if (!role.equals("ADMIN")) {
+            return ResponseEntity.status(403).body("Access denied");
         }
+        String result = bookService.deleteBook(id);
+        if (result.equals("Book deleted successfully")) return ResponseEntity.ok(result);
         return ResponseEntity.badRequest().body(result);
     }
+
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateBook(@PathVariable int id, @RequestBody Book book) {
-        String result = bookService.updateBook(id, book);
-        if (result.equals("Book updated successfully")) {
-            return ResponseEntity.ok(result);
+    public ResponseEntity<?> updateBook(@PathVariable int id, @RequestBody Book book,
+                                        @RequestHeader(value = "X-User-Role", defaultValue = "") String role) {
+        if (!role.equals("ADMIN")) {
+            return ResponseEntity.status(403).body("Access denied");
         }
+        String result = bookService.updateBook(id, book);
+        if (result.equals("Book updated successfully")) return ResponseEntity.ok(result);
         return ResponseEntity.badRequest().body(result);
     }
 
